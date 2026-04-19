@@ -3,103 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bingo Master</title>
+    <title>Bingo Master Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+TC:wght@500;900&display=swap');
-        body { font-family: 'Noto Sans TC', sans-serif; background-color: #0f172a; color: white; }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #0f172a; color: white; overflow-x: hidden; }
         .bingo-title { font-family: 'Black Han Sans', sans-serif; text-shadow: 4px 4px 0px #3b82f6; }
-        #game-board { display: grid; gap: 8px; margin: 0 auto; }
-        .cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; font-weight: 900; transition: all 0.2s; background: #1e293b; border: 2px solid #334155; }
-        .cell.marked { background: #ef4444 !important; color: white; border-color: #f87171; transform: scale(0.95); }
-        .cell.last-move { border: 3px solid #fbbf24; animation: flash 1s infinite; }
-        @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
-        .log-entry { animation: slideIn 0.3s ease-out; }
-        @keyframes slideIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        #game-board { display: grid; gap: 6px; margin: 0 auto; transition: all 0.5s ease; }
+        .cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; font-weight: 900; background: #1e293b; border: 1px solid #334155; position: relative; }
+        .cell:hover { border-color: #60a5fa; background: #1e2945; }
+        .cell.marked { background: #ef4444 !important; border-color: #f87171; color: white; }
+        .cell.last-move::after { content: ''; position: absolute; inset: -3px; border: 3px solid #fbbf24; border-radius: 8px; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
     </style>
 </head>
 <body class="p-4">
 
-    <div id="app" class="max-w-4xl mx-auto">
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-6xl bingo-title tracking-widest italic">BINGO</h1>
-            <div id="user-area" class="hidden flex items-center gap-4">
-                <span id="user-name" class="font-bold text-blue-400"></span>
-                <button id="btn-logout" class="bg-red-900/50 hover:bg-red-600 text-white px-4 py-1 rounded-full text-xs transition">登出</button>
+    <div id="app" class="max-w-5xl mx-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-5xl bingo-title italic">BINGO</h1>
+            <div id="user-area" class="hidden flex items-center gap-3 bg-slate-800 p-2 px-4 rounded-full border border-slate-700">
+                <span id="user-name" class="font-bold text-sm"></span>
+                <button id="btn-logout" class="text-xs text-red-400 hover:text-red-300 underline">登出</button>
             </div>
         </div>
 
-        <div id="login-section" class="text-center py-20 bg-slate-800 rounded-3xl border-4 border-slate-700 shadow-2xl">
-            <h2 class="text-2xl mb-6">準備好開始比賽了嗎？</h2>
-            <button id="btn-login" class="bg-blue-600 hover:bg-blue-500 text-white px-12 py-4 rounded-2xl font-black text-xl shadow-[0_0_20px_rgba(37,99,235,0.5)]">使用 Google 登入</button>
+        <div id="login-section" class="text-center py-20 bg-slate-800 rounded-3xl border-4 border-slate-700">
+            <button id="btn-login" class="bg-blue-600 hover:bg-blue-500 text-white px-10 py-4 rounded-xl font-black text-xl">Google 登入</button>
         </div>
 
-        <div id="lobby-section" class="hidden space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <button id="btn-create" class="bg-emerald-600 hover:bg-emerald-500 p-8 rounded-3xl text-2xl font-black border-b-8 border-emerald-800 active:translate-y-2 active:border-b-0 transition-all">創建新戰場</button>
-                <div class="bg-slate-800 p-6 rounded-3xl border-2 border-slate-700 flex flex-col justify-between">
-                    <input id="input-room-id" type="text" maxlength="8" placeholder="輸入 8 位代碼" class="bg-slate-900 border-2 border-slate-600 p-4 rounded-xl text-center text-2xl font-mono mb-4 outline-none focus:border-blue-500">
-                    <button id="btn-join" class="w-full bg-slate-200 text-black py-4 rounded-xl font-black text-xl hover:bg-white">加入房間</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="room-section" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div class="lg:col-span-4 space-y-6">
-                <div class="bg-slate-800 p-6 rounded-3xl border-2 border-slate-700">
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="text-slate-400 font-bold uppercase text-xs tracking-widest">Room ID</span>
-                        <span id="display-room-id" class="text-2xl font-mono text-blue-400"></span>
-                    </div>
-                    
-                    <div id="host-controls" class="hidden space-y-4 pt-4 border-t border-slate-700">
-                        <p class="text-emerald-400 font-bold text-sm">⚔️ 戰場設定 (房主)</p>
-                        <div class="space-y-3">
-                            <div>
-                                <label class="text-xs text-slate-400">網格大小</label>
-                                <select id="select-size" class="w-full bg-slate-900 p-2 rounded-lg text-sm border border-slate-600">
-                                    <option value="3">3 x 3 (小局)</option>
-                                    <option value="5" selected>5 x 5 (經典)</option>
-                                    <option value="7">7 x 7 (漫長)</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="text-xs text-slate-400">連線目標</label>
-                                <select id="select-goal" class="w-full bg-slate-900 p-2 rounded-lg text-sm border border-slate-600"></select>
-                            </div>
-                            <div>
-                                <label class="text-xs text-slate-400">數字範圍 (1 ~ ?)</label>
-                                <input id="input-max-num" type="number" value="25" class="w-full bg-slate-900 p-2 rounded-lg text-sm border border-slate-600">
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <input type="checkbox" id="check-fog">
-                                <label for="check-fog" class="text-xs">開啟隱藏模式 (看不見對方點什麼)</label>
-                            </div>
+        <div id="room-section" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-4 space-y-4">
+                <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700">
+                    <p class="text-blue-400 font-black mb-4">⚙️ 遊戲設定 (房主可改)</p>
+                    <div id="host-controls" class="space-y-3">
+                        <div>
+                            <label class="text-xs text-slate-400">網格大小</label>
+                            <select id="select-size" class="w-full bg-slate-900 border border-slate-600 p-2 rounded-lg">
+                                <option value="3">3 x 3</option>
+                                <option value="5" selected>5 x 5</option>
+                                <option value="7">7 x 7</option>
+                            </select>
                         </div>
-                        <button id="btn-start" class="w-full bg-blue-600 py-3 rounded-xl font-black hover:bg-blue-500 shadow-lg">開始遊戲</button>
+                        <div>
+                            <label class="text-xs text-slate-400">數字範圍 (1 ~ <span id="min-hint" class="text-yellow-500 font-bold">25</span>+)</label>
+                            <input id="input-max-num" type="number" value="25" min="25" class="w-full bg-slate-900 border border-slate-600 p-2 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400">勝利線數</label>
+                            <select id="select-goal" class="w-full bg-slate-900 border border-slate-600 p-2 rounded-lg"></select>
+                        </div>
+                        <button id="btn-start" class="w-full bg-emerald-600 py-3 rounded-xl font-black hover:bg-emerald-500 mt-2 transition-all shadow-lg">開始遊戲</button>
                     </div>
+                    <div id="guest-msg" class="hidden text-center p-4 text-slate-500 italic">等待房主設定中...</div>
                 </div>
 
-                <div class="bg-slate-800 p-6 rounded-3xl border-2 border-slate-700">
-                    <p class="text-slate-400 font-bold text-xs mb-4">玩家列表</p>
+                <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700">
+                    <p class="text-xs font-bold text-slate-500 mb-3">玩家列表</p>
                     <div id="player-list" class="space-y-2"></div>
                 </div>
             </div>
 
             <div class="lg:col-span-8 flex flex-col gap-4">
-                <div id="game-info" class="bg-slate-800 p-4 rounded-2xl flex justify-between items-center border-2 border-slate-700">
-                    <div id="turn-display" class="font-black text-xl">等待中...</div>
-                    <div class="flex gap-4 items-center">
-                        <button id="btn-ai" class="hidden bg-purple-600 text-xs px-3 py-1 rounded-full font-bold hover:bg-purple-500 transition">AI 幫我選</button>
-                        <span id="win-goal-display" class="text-red-400 font-bold"></span>
-                    </div>
+                <div class="bg-slate-800 p-4 rounded-xl flex justify-between items-center border border-slate-700">
+                    <div id="turn-display" class="font-black text-xl text-slate-400">準備中...</div>
+                    <button id="btn-ai" class="hidden bg-purple-600 text-xs px-4 py-2 rounded-lg font-bold hover:bg-purple-500 transition-all">AI 自動選號</button>
                 </div>
-
-                <div id="game-board" class="pointer-events-none opacity-20 transition-all duration-500"></div>
                 
-                <div id="game-logs" class="bg-black/30 p-4 rounded-xl h-24 overflow-y-auto text-xs text-slate-400 font-mono">
-                    <div>戰報系統就緒...</div>
+                <div id="game-board" class="pointer-events-none opacity-20"></div>
+
+                <div id="game-logs" class="bg-slate-900/50 p-4 rounded-xl h-24 overflow-y-auto text-xs font-mono text-slate-500 border border-slate-800">
+                    <div>> 戰報系統就緒...</div>
                 </div>
+            </div>
+        </div>
+        
+        <div id="lobby-section" class="hidden space-y-4 max-w-md mx-auto">
+            <button id="btn-create" class="w-full bg-blue-600 p-6 rounded-2xl text-xl font-black shadow-lg">創建房間</button>
+            <div class="flex gap-2">
+                <input id="input-room-id" type="text" placeholder="輸入8位代碼" class="flex-grow bg-slate-800 border-2 border-slate-700 p-4 rounded-xl text-center font-mono">
+                <button id="btn-join" class="bg-white text-black px-6 rounded-xl font-bold">加入</button>
             </div>
         </div>
     </div>
@@ -111,6 +94,7 @@
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getDatabase, ref, set, get, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
+    // --- 請填入你的 Firebase Config ---
     const firebaseConfig = {
         apiKey: "AIzaSyBdt75NPrgmYs0rw1KQv_sRfYdFwQimo1c",
         authDomain: "bingo-f3e9d.firebaseapp.com",
@@ -125,9 +109,36 @@
     const db = getDatabase(app);
     const provider = new GoogleAuthProvider();
 
-    let user = null, roomId = null, board = [], isMyTurn = false, gameState = 'waiting';
+    let user = null, roomId = null, board = [], isMyTurn = false;
 
-    // --- 認證 ---
+    // --- 安全檢查與邏輯 ---
+    const selectSize = document.getElementById('select-size');
+    const inputMaxNum = document.getElementById('input-max-num');
+    const minHint = document.getElementById('min-hint');
+
+    function updateConstraints() {
+        const size = parseInt(selectSize.value);
+        const min = size * size;
+        minHint.innerText = min;
+        inputMaxNum.setAttribute('min', min);
+        if (parseInt(inputMaxNum.value) < min) {
+            inputMaxNum.value = min;
+        }
+        
+        // 更新連線目標選項
+        const goalSelect = document.getElementById('select-goal');
+        goalSelect.innerHTML = '';
+        for (let i = 1; i <= size + 2; i++) {
+            let opt = new Option(`${i} 條連線`, i);
+            if (i === 3) opt.selected = true;
+            goalSelect.add(opt);
+        }
+    }
+
+    selectSize.onchange = updateConstraints;
+    updateConstraints();
+
+    // --- 認證流程 ---
     onAuthStateChanged(auth, u => {
         if (u) { user = u; showSection('lobby-section'); document.getElementById('user-area').classList.remove('hidden'); document.getElementById('user-name').innerText = u.displayName; }
         else { showSection('login-section'); document.getElementById('user-area').classList.add('hidden'); }
@@ -135,12 +146,12 @@
     document.getElementById('btn-login').onclick = () => signInWithPopup(auth, provider);
     document.getElementById('btn-logout').onclick = () => signOut(auth);
 
-    // --- 房間與大廳 ---
+    // --- 房間管理 ---
     document.getElementById('btn-create').onclick = async () => {
         const id = Math.random().toString().slice(2, 10);
         await set(ref(db, `rooms/${id}`), {
             host: user.uid, status: 'waiting', 
-            settings: { size: 5, goal: 3, maxNum: 25, fog: false },
+            settings: { size: 5, goal: 3, maxNum: 25 },
             called: [0], turnIdx: 0, order: [user.uid],
             players: { [user.uid]: { name: user.displayName } }
         });
@@ -151,7 +162,7 @@
 
     async function join(id) {
         const snap = await get(ref(db, `rooms/${id}`));
-        if (!snap.exists()) return alert("找不到房間");
+        if (!snap.exists()) return alert("房間不存在");
         roomId = id;
         await update(ref(db, `rooms/${id}/players/${user.uid}`), { name: user.displayName });
         const d = snap.val();
@@ -159,157 +170,108 @@
             await update(ref(db, `rooms/${id}`), { order: [...d.order, user.uid] });
         }
         showSection('room-section');
-        document.getElementById('display-room-id').innerText = id;
         listen();
     }
 
-    // --- 遊戲邏輯 ---
+    // --- 核心遊戲流程 ---
     function listen() {
         onValue(ref(db, `rooms/${roomId}`), snap => {
             const d = snap.val(); if (!d) return;
-            gameState = d.status;
             const isHost = d.host === user.uid;
-            document.getElementById('host-controls').classList.toggle('hidden', !isHost || d.status !== 'waiting');
-            document.getElementById('win-goal-display').innerText = `目標: ${d.settings.goal} 線`;
             
-            // 房主動態選單：自動生成連線選項
-            if (isHost && d.status === 'waiting') {
-                const goalSelect = document.getElementById('select-goal');
-                if (goalSelect.options.length === 0) {
-                    for(let i=1; i<=d.settings.size+2; i++) {
-                        let opt = new Option(`${i} 條線`, i);
-                        if (i === 3) opt.selected = true;
-                        goalSelect.add(opt);
-                    }
-                }
-            }
+            document.getElementById('host-controls').classList.toggle('hidden', !isHost || d.status !== 'waiting');
+            document.getElementById('guest-msg').classList.toggle('hidden', isHost || d.status !== 'waiting');
 
-            // 玩家列表
+            // 玩家清單
             document.getElementById('player-list').innerHTML = d.order.map(uid => `
-                <div class="flex justify-between p-3 rounded-xl ${d.order[d.turnIdx] === uid && d.status==='playing' ? 'bg-blue-600' : 'bg-slate-900/50'}">
-                    <span class="text-sm font-bold">${d.players[uid].name} ${uid === d.host ? '👑' : ''}</span>
+                <div class="flex justify-between p-2 px-4 rounded-lg bg-slate-900/50 border border-slate-700">
+                    <span class="text-sm font-bold ${d.order[d.turnIdx] === uid && d.status === 'playing' ? 'text-blue-400' : ''}">${d.players[uid].name}</span>
                 </div>
             `).join('');
 
-            // 倒數
-            if (d.status === 'countdown') startCountdown();
+            if (d.status === 'countdown') {
+                document.getElementById('countdown-overlay').classList.remove('hidden');
+                document.getElementById('countdown-overlay').innerText = "READY";
+            }
 
-            // 遊戲中
             if (d.status === 'playing') {
-                if (board.length === 0) initBoard(d.settings);
+                document.getElementById('countdown-overlay').classList.add('hidden');
+                if (board.length === 0) {
+                    // 初始化盤面時，強制根據房主設定的範圍取值
+                    let pool = Array.from({length: d.settings.maxNum}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
+                    board = pool.slice(0, d.settings.size * d.settings.size);
+                    const gb = document.getElementById('game-board');
+                    gb.style.gridTemplateColumns = `repeat(${d.settings.size}, 1fr)`;
+                    gb.style.maxWidth = `${d.settings.size * 70}px`;
+                }
+                
                 document.getElementById('game-board').classList.remove('pointer-events-none', 'opacity-20');
                 isMyTurn = d.order[d.turnIdx] === user.uid;
-                document.getElementById('turn-display').innerText = isMyTurn ? "➡️ 你的回合" : "等待對方...";
-                document.getElementById('turn-display').className = isMyTurn ? "font-black text-xl text-yellow-400 animate-pulse" : "font-black text-xl text-slate-500";
+                const td = document.getElementById('turn-display');
+                td.innerText = isMyTurn ? "🔥 輪到你了！" : "⌛ 對手考慮中...";
+                td.className = isMyTurn ? "font-black text-xl text-yellow-400 animate-pulse" : "font-black text-xl text-slate-500";
                 document.getElementById('btn-ai').classList.toggle('hidden', !isMyTurn);
+                
                 render(d);
                 check(d);
             }
 
             if (d.status === 'ended') {
-                document.getElementById('turn-display').innerText = `🏆 WINNER: ${d.winner}`;
+                document.getElementById('turn-display').innerText = `🏆 贏家: ${d.winner}`;
                 document.getElementById('turn-display').className = "font-black text-2xl text-emerald-400";
                 document.getElementById('game-board').classList.add('pointer-events-none');
             }
         });
     }
 
-    function initBoard(s) {
-        // 生成數字池並隨機打亂
-        let nums = Array.from({length: s.maxNum}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
-        board = nums.slice(0, s.size * s.size);
-        const g = document.getElementById('game-board');
-        g.style.gridTemplateColumns = `repeat(${s.size}, 1fr)`;
-        g.style.maxWidth = `${s.size * 80}px`;
-    }
-
     function render(d) {
-        const g = document.getElementById('game-board');
-        g.innerHTML = '';
+        const gb = document.getElementById('game-board');
+        gb.innerHTML = '';
         board.forEach(n => {
-            const isCalled = d.called.includes(n);
             const div = document.createElement('div');
-            div.className = `cell ${isCalled ? 'marked' : ''} ${d.lastMove === n ? 'last-move' : ''}`;
+            const called = d.called.includes(n);
+            div.className = `cell ${called ? 'marked' : ''} ${d.lastMove === n ? 'last-move' : ''}`;
             div.style.fontSize = d.settings.size > 5 ? '0.8rem' : '1.2rem';
             div.innerText = n;
-            div.onclick = () => move(n, d);
-            g.appendChild(div);
-        });
-
-        // 戰報日誌
-        if (d.lastMove && d.lastMove !== 0) {
-            const log = document.getElementById('game-logs');
-            const lastLog = log.firstChild?.innerText;
-            if (lastLog !== `戰報: 對手選擇了 ${d.lastMove}`) {
-                const entry = document.createElement('div');
-                entry.className = "log-entry text-blue-400 mb-1";
-                entry.innerText = `戰報: 有人選擇了 ${d.lastMove}`;
-                log.prepend(entry);
-            }
-        }
-    }
-
-    async function move(n, d) {
-        if (!isMyTurn || d.called.includes(n)) return;
-        const next = (d.turnIdx + 1) % d.order.length;
-        await update(ref(db, `rooms/${roomId}`), {
-            called: [...d.called, n],
-            turnIdx: next,
-            lastMove: n
+            div.onclick = () => {
+                if (isMyTurn && !called) {
+                    const next = (d.turnIdx + 1) % d.order.length;
+                    update(ref(db, `rooms/${roomId}`), { called: [...d.called, n], turnIdx: next, lastMove: n });
+                }
+            };
+            gb.appendChild(div);
         });
     }
-
-    // AI 幫我選邏輯
-    document.getElementById('btn-ai').onclick = async () => {
-        const snap = await get(ref(db, `rooms/${roomId}`));
-        const d = snap.val();
-        const available = board.filter(n => !d.called.includes(n));
-        if (available.length > 0) {
-            const randomPick = available[Math.floor(Math.random() * available.length)];
-            move(randomPick, d);
-        }
-    };
 
     function check(d) {
-        const s = parseInt(d.settings.size);
-        const goal = parseInt(d.settings.goal);
-        let lines = 0;
-        const m = [];
+        const s = parseInt(d.settings.size), goal = parseInt(d.settings.goal);
+        let lines = 0, m = [];
         for(let i=0; i<s; i++) m[i] = board.slice(i*s, i*s+s).map(n => d.called.includes(n));
-        
         for(let i=0; i<s; i++) {
-            if (m[i].every(v => v)) lines++; // 橫
-            if (m.map(r => r[i]).every(v => v)) lines++; // 豎
+            if (m[i].every(v => v)) lines++;
+            if (m.map(r => r[i]).every(v => v)) lines++;
         }
         if (Array.from({length: s}, (_, i) => m[i][i]).every(v => v)) lines++;
         if (Array.from({length: s}, (_, i) => m[i][s-1-i]).every(v => v)) lines++;
-
-        if (lines >= goal) {
-            update(ref(db, `rooms/${roomId}`), { status: 'ended', winner: user.displayName });
-        }
-    }
-
-    function startCountdown() {
-        const ov = document.getElementById('countdown-overlay');
-        ov.classList.remove('hidden');
-        let c = 3;
-        const t = setInterval(() => {
-            ov.innerText = c > 0 ? c : "GO!";
-            if (c < 0) { clearInterval(t); ov.classList.add('hidden'); }
-            c--;
-        }, 1000);
+        if (lines >= goal) update(ref(db, `rooms/${roomId}`), { status: 'ended', winner: user.displayName });
     }
 
     document.getElementById('btn-start').onclick = () => {
-        const s = document.getElementById('select-size').value;
-        const g = document.getElementById('select-goal').value;
-        const m = document.getElementById('input-max-num').value;
-        const fog = document.getElementById('check-fog').checked;
+        const s = parseInt(selectSize.value);
+        const m = parseInt(inputMaxNum.value);
+        if (m < s * s) return alert("數字不夠填滿盤面！");
         update(ref(db, `rooms/${roomId}`), {
-            status: 'countdown',
-            settings: { size: s, goal: g, maxNum: m, fog: fog }
+            status: 'playing',
+            settings: { size: s, goal: document.getElementById('select-goal').value, maxNum: m }
         });
-        setTimeout(() => update(ref(db, `rooms/${roomId}`), { status: 'playing' }), 4000);
+    };
+
+    document.getElementById('btn-ai').onclick = () => {
+        const uncalled = board.filter(n => !document.querySelector(`.cell.marked:nth-child(${board.indexOf(n)+1})`));
+        if (uncalled.length > 0) {
+            const pick = uncalled[Math.floor(Math.random() * uncalled.length)];
+            document.querySelector(`.cell:nth-child(${board.indexOf(pick)+1})`).click();
+        }
     };
 
     function showSection(id) {
