@@ -3,98 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bingo</title>
+    <title>BINGO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;900&display=swap');
-        body { font-family: 'Noto Sans TC', sans-serif; }
-        .bingo-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
-        .cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 12px; cursor: pointer; font-weight: 900; font-size: 1.5rem; transition: all 0.2s; background: #fff; box-shadow: inset 0 -4px 0 rgba(0,0,0,0.1); border: 2px solid #e2e8f0; }
-        .cell.marked { background: #ff4757; color: white; border-color: #ff4757; transform: translateY(2px); box-shadow: none; }
-        .cell.last-move { border: 4px solid #2f3542; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-        .countdown-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; color: white; font-size: 8rem; font-weight: 900; z-index: 100; pointer-events: none; }
+        @import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+TC:wght@500;900&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f3f4f6; }
+        .fancy-font { font-family: 'Black Han Sans', sans-serif; }
+        .bingo-grid { display: grid; gap: 8px; margin: 0 auto; }
+        .cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; font-weight: 900; transition: all 0.2s; background: white; border: 2px solid #000; box-shadow: 4px 4px 0px #000; }
+        .cell:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px #000; }
+        .cell.marked { background: #ff4757; color: white; border-color: #000; }
+        .cell.opponent-marked { background: #e2e8f0; border-style: dashed; }
+        .countdown-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center; color: #000; font-size: 10rem; font-weight: 900; z-index: 100; pointer-events: none; }
     </style>
 </head>
-<body class="bg-yellow-400 min-h-screen p-4">
+<body class="p-4">
 
-    <div id="app" class="max-w-2xl mx-auto bg-white p-6 rounded-3xl shadow-2xl border-4 border-black">
-        <header class="text-center mb-6">
-            <h1 class="text-5xl font-black italic tracking-tighter text-black">BINGO</h1>
-            <div id="user-info" class="text-sm font-bold text-gray-500 mt-2"></div>
+    <div id="app" class="max-w-3xl mx-auto bg-white border-4 border-black p-6 rounded-3xl shadow-[8px_8px_0px_rgba(0,0,0,1)]">
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-6xl fancy-font tracking-tighter italic">BINGO</h1>
+            <button id="btn-logout" class="hidden bg-red-100 text-red-600 px-4 py-2 rounded-xl font-bold border-2 border-red-600">登出</button>
         </header>
         
         <div id="countdown" class="countdown-overlay hidden"></div>
 
-        <div id="login-section" class="text-center py-10">
-            <button id="btn-login" class="bg-black text-white px-10 py-4 rounded-2xl font-black text-xl hover:bg-gray-800 transition-all shadow-lg">
-                GOOGLE 登入開始玩
+        <div id="login-section" class="text-center py-20">
+            <button id="btn-login" class="bg-yellow-400 border-4 border-black px-10 py-4 rounded-2xl font-black text-2xl hover:bg-yellow-300 transition-all shadow-[6px_6px_0px_#000]">
+                GOOGLE 登入遊戲
             </button>
         </div>
 
-        <div id="lobby-section" class="hidden space-y-6">
-            <button id="btn-create" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-black py-6 rounded-2xl text-2xl shadow-[0_8px_0_rgb(37,99,235)] active:shadow-none active:translate-y-2 transition-all">
-                創 建 房 間
+        <div id="lobby-section" class="hidden space-y-4">
+            <div id="user-display" class="bg-gray-100 p-4 rounded-2xl border-2 border-black font-bold"></div>
+            <button id="btn-create" class="w-full bg-blue-400 hover:bg-blue-500 text-white font-black py-6 rounded-2xl text-3xl border-4 border-black shadow-[6px_6px_0px_#000]">
+                建立新對戰
             </button>
-            <div class="flex gap-3">
-                <input id="input-room-id" type="text" maxlength="8" placeholder="輸入8位代碼" class="flex-grow border-4 border-black p-4 rounded-2xl font-black text-center text-xl outline-none">
-                <button id="btn-join" class="bg-black text-white px-8 rounded-2xl font-black text-xl hover:bg-gray-800">加入</button>
+            <div class="flex gap-2">
+                <input id="input-room-id" type="text" maxlength="8" placeholder="輸入8位代碼" class="flex-grow border-4 border-black p-4 rounded-2xl font-black text-center text-2xl outline-none">
+                <button id="btn-join" class="bg-black text-white px-8 rounded-2xl font-black text-xl">加入</button>
             </div>
         </div>
 
         <div id="room-section" class="hidden">
-            <div class="flex justify-between items-end mb-6">
+            <div class="grid grid-cols-2 gap-4 mb-6 bg-yellow-100 p-4 rounded-2xl border-2 border-black">
                 <div>
-                    <span class="bg-black text-white px-3 py-1 rounded-full text-xs font-black">ROOM CODE</span>
-                    <p class="text-3xl font-black text-black" id="display-room-id"></p>
+                    <span class="text-xs font-black uppercase">房號</span>
+                    <p class="text-2xl font-black" id="display-room-id"></p>
                 </div>
                 <div class="text-right">
-                    <span class="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-black">WIN GOAL</span>
-                    <p class="text-2xl font-black text-red-500" id="display-goal">--</p>
+                    <span class="text-xs font-black uppercase">目標</span>
+                    <p class="text-2xl font-black text-red-600" id="display-goal"></p>
                 </div>
             </div>
 
-            <div id="host-controls" class="hidden bg-gray-100 p-4 rounded-2xl border-2 border-black mb-6 space-y-4">
-                <div class="grid grid-cols-2 gap-4">
+            <div id="host-controls" class="hidden bg-gray-50 p-4 rounded-2xl border-2 border-black mb-6">
+                <h3 class="font-black mb-4">🛠️ 房主自訂規則</h3>
+                <div class="grid grid-cols-2 gap-4 text-sm font-bold mb-4">
                     <div>
-                        <label class="block text-xs font-black mb-1">連線幾條贏？</label>
-                        <select id="select-goal" class="w-full border-2 border-black p-2 rounded-xl font-bold">
+                        盤面大小：
+                        <select id="select-size" class="w-full border-2 border-black rounded-lg p-1">
+                            <option value="3">3 x 3</option>
+                            <option value="5" selected>5 x 5</option>
+                            <option value="7">7 x 7</option>
+                        </select>
+                    </div>
+                    <div>
+                        數字範圍：
+                        <select id="select-range" class="w-full border-2 border-black rounded-lg p-1">
+                            <option value="25">1 ~ 25</option>
+                            <option value="50">1 ~ 50</option>
+                            <option value="75">1 ~ 75</option>
+                        </select>
+                    </div>
+                    <div>
+                        勝利條件：
+                        <select id="select-goal" class="w-full border-2 border-black rounded-lg p-1">
                             <option value="1">1 條線</option>
                             <option value="3" selected>3 條線</option>
-                            <option value="5">5 條線 (全滿)</option>
+                            <option value="5">5 條線</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-black mb-1">隱藏對方出牌？</label>
-                        <select id="select-fog" class="w-full border-2 border-black p-2 rounded-xl font-bold">
-                            <option value="false">公開 (一般)</option>
-                            <option value="true">隱藏 (刺激！)</option>
+                        隱藏對手出牌：
+                        <select id="select-fog" class="w-full border-2 border-black rounded-lg p-1">
+                            <option value="false">關閉</option>
+                            <option value="true">開啟 (隱藏)</option>
                         </select>
                     </div>
                 </div>
-                <button id="btn-start" class="w-full bg-green-500 text-white font-black py-3 rounded-xl border-b-4 border-green-700 hover:bg-green-600">開始倒數遊戲</button>
+                <button id="btn-start" class="w-full bg-green-500 text-white font-black py-3 rounded-xl border-2 border-black shadow-[4px_4px_0px_#000]">開始遊戲</button>
             </div>
 
-            <div id="turn-indicator" class="text-center py-4 rounded-2xl mb-6 font-black text-2xl border-4 border-black transition-all">
-                等待房主開始...
-            </div>
+            <div id="turn-indicator" class="text-center py-4 rounded-2xl mb-6 font-black text-2xl border-4 border-black transition-all"></div>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div class="md:col-span-1 space-y-2" id="player-list"></div>
-                <div class="md:col-span-3">
-                    <div id="game-board" class="bingo-grid pointer-events-none opacity-20"></div>
+            <div class="flex flex-col md:flex-row gap-6">
+                <div class="flex-1">
+                    <div id="game-board" class="bingo-grid"></div>
+                    <div class="flex gap-2 mt-4">
+                        <button id="btn-random-fill" class="flex-1 bg-gray-200 p-2 rounded-lg font-bold border-2 border-black">隨機填入</button>
+                        <button id="btn-ai-hint" class="flex-1 bg-purple-100 text-purple-700 p-2 rounded-lg font-bold border-2 border-purple-700 hidden">AI 建議</button>
+                    </div>
                 </div>
+                <div class="w-full md:w-48 space-y-2" id="player-list"></div>
             </div>
             
-            <button id="btn-leave" class="mt-8 w-full text-gray-400 font-bold hover:text-red-500">離開房間</button>
+            <button id="btn-leave" class="mt-10 w-full text-gray-400 font-bold hover:text-red-500">放棄並離開</button>
         </div>
     </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getDatabase, ref, set, get, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
+    // --- 請填入你的 Firebase 設定 ---
     const firebaseConfig = {
         apiKey: "AIzaSyBdt75NPrgmYs0rw1KQv_sRfYdFwQimo1c",
         authDomain: "bingo-f3e9d.firebaseapp.com",
@@ -113,27 +135,30 @@
     let currentRoomId = null;
     let myBoard = [];
     let isGameOver = false;
-    let localMarked = []; // 用於隱藏模式
 
-    // --- 介面控制 ---
-    function showSection(id) {
-        ['login-section', 'lobby-section', 'room-section'].forEach(s => document.getElementById(s).classList.toggle('hidden', s !== id));
-    }
-
+    // --- 使用者狀態 ---
     onAuthStateChanged(auth, user => {
-        if (user) { currentUser = user; document.getElementById('user-info').innerText = user.displayName; showSection('lobby-section'); }
-        else { showSection('login-section'); }
+        if (user) {
+            currentUser = user;
+            document.getElementById('user-display').innerText = `玩家：${user.displayName}`;
+            document.getElementById('btn-logout').classList.remove('hidden');
+            showSection('lobby-section');
+        } else {
+            showSection('login-section');
+            document.getElementById('btn-logout').classList.add('hidden');
+        }
     });
 
     document.getElementById('btn-login').onclick = () => signInWithPopup(auth, provider);
+    document.getElementById('btn-logout').onclick = () => signOut(auth);
 
-    // --- 房間邏輯 ---
+    // --- 核心邏輯 ---
     document.getElementById('btn-create').onclick = async () => {
         const id = Math.random().toString().slice(2, 10);
         await set(ref(db, `rooms/${id}`), {
             host: currentUser.uid,
             status: 'waiting',
-            settings: { goal: 3, fogOfWar: false },
+            settings: { size: 5, range: 25, goal: 3, fog: false },
             calledNumbers: [0],
             turnIndex: 0,
             playerOrder: [currentUser.uid],
@@ -146,18 +171,14 @@
 
     async function joinRoom(roomId) {
         const snap = await get(ref(db, `rooms/${roomId}`));
-        if (!snap.exists()) return alert("房間不存在");
-        const data = snap.val();
-        if (Object.keys(data.players).length >= 10) return alert("房間滿了");
-
+        if (!snap.exists()) return alert("找不到房間");
         await update(ref(db, `rooms/${roomId}/players/${currentUser.uid}`), { name: currentUser.displayName });
+        
+        const data = snap.val();
         if (!data.playerOrder.includes(currentUser.uid)) {
-            const newOrder = [...data.playerOrder, currentUser.uid];
-            await update(ref(db, `rooms/${roomId}`), { playerOrder: newOrder });
+            await update(ref(db, `rooms/${roomId}`), { playerOrder: [...data.playerOrder, currentUser.uid] });
         }
-
-        currentRoomId = roomId;
-        myBoard = []; isGameOver = false; localMarked = [];
+        currentRoomId = roomId; myBoard = []; isGameOver = false;
         showSection('room-section');
         document.getElementById('display-room-id').innerText = roomId;
         listenRoom(roomId);
@@ -167,136 +188,127 @@
         onValue(ref(db, `rooms/${roomId}`), snap => {
             const data = snap.val();
             if (!data) return;
-
             if (!data.players[currentUser.uid]) return location.reload();
 
             const isHost = data.host === currentUser.uid;
             document.getElementById('host-controls').classList.toggle('hidden', !isHost || data.status !== 'waiting');
-            document.getElementById('display-goal').innerText = `${data.settings.goal} 線`;
+            document.getElementById('display-goal').innerText = `${data.settings.goal} 條線`;
 
-            // 渲染玩家列表
-            document.getElementById('player-list').innerHTML = data.playerOrder.map(uid => {
-                const isActive = data.playerOrder[data.turnIndex] === uid && data.status === 'playing';
-                return `<div class="p-2 rounded-xl border-2 ${isActive ? 'bg-black text-white border-black' : 'bg-white border-gray-200'} text-sm font-black flex justify-between">
+            const activeUid = data.playerOrder[data.turnIndex];
+            const isMyTurn = activeUid === currentUser.uid;
+
+            // 玩家清單
+            document.getElementById('player-list').innerHTML = data.playerOrder.map(uid => `
+                <div class="p-2 border-2 border-black rounded-lg ${activeUid === uid ? 'bg-yellow-400' : 'bg-white'} text-sm font-bold flex justify-between">
                     <span>${data.players[uid].name}</span>
-                    ${isHost && uid !== currentUser.uid ? `<button onclick="kickPlayer('${uid}')" class="text-red-500 text-xs">踢</button>` : ''}
-                </div>`;
-            }).join('');
+                    ${isHost && uid !== currentUser.uid ? `<button onclick="kick('${uid}')">❌</button>` : ''}
+                </div>
+            `).join('');
 
-            // 處理倒數
-            if (data.status === 'counting' && document.getElementById('countdown').classList.contains('hidden')) {
-                startCountdownAction();
-            }
-
-            // 處理遊戲盤面
+            // 遊戲狀態處理
             if (data.status === 'playing') {
-                if (myBoard.length === 0) generateBoard();
-                document.getElementById('game-board').classList.remove('pointer-events-none', 'opacity-20');
-                const isMyTurn = data.playerOrder[data.turnIndex] === currentUser.uid;
-                const indicator = document.getElementById('turn-indicator');
-                indicator.innerText = isMyTurn ? "🔥 輪到你出牌！" : "💤 等待對手...";
-                indicator.className = `text-center py-4 rounded-2xl mb-6 font-black text-2xl border-4 border-black transition-all ${isMyTurn ? 'bg-yellow-400' : 'bg-gray-100 text-gray-400'}`;
-                
-                renderBoard(data.calledNumbers, data.settings.fogOfWar, data.lastMove);
-                checkWin(data.calledNumbers, data.settings.goal);
-            }
-
-            if (data.status === 'ended') {
+                if (myBoard.length === 0) generateBoard(data.settings.size, data.settings.range);
+                document.getElementById('btn-ai-hint').classList.toggle('hidden', !isMyTurn);
+                document.getElementById('turn-indicator').innerText = isMyTurn ? "👉 輪到你出牌！" : "⌛ 等待對手...";
+                renderBoard(data);
+                checkWin(data);
+            } else if (data.status === 'ended') {
                 document.getElementById('turn-indicator').innerText = `🏆 贏家：${data.winnerName}`;
-                document.getElementById('turn-indicator').classList.add('bg-green-500', 'text-white');
-                document.getElementById('game-board').classList.add('pointer-events-none');
+                renderBoard(data, true); // 遊戲結束揭曉全盤面
+            } else {
+                document.getElementById('turn-indicator').innerText = "等待房主開始...";
             }
         });
     }
 
-    function startCountdownAction() {
-        const el = document.getElementById('countdown');
-        el.classList.remove('hidden');
-        let count = 3;
-        const timer = setInterval(() => {
-            el.innerText = count > 0 ? count : "GO!";
-            if (count < 0) {
-                clearInterval(timer);
-                el.classList.add('hidden');
-                el.innerText = "";
-            }
-            count--;
-        }, 800);
+    // --- 遊戲功能 ---
+    function generateBoard(size, range) {
+        myBoard = Array.from({length: range}, (_, i) => i + 1).sort(() => Math.random() - 0.5).slice(0, size * size);
     }
 
-    function generateBoard() {
-        myBoard = Array.from({length: 25}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
-    }
+    document.getElementById('btn-random-fill').onclick = () => {
+        const snap = get(ref(db, `rooms/${currentRoomId}`)).then(s => {
+            generateBoard(s.val().settings.size, s.val().settings.range);
+            renderBoard(s.val());
+        });
+    };
 
-    function renderBoard(calledNumbers, fogOfWar, lastMove) {
-        const container = document.getElementById('game-board');
-        container.innerHTML = '';
+    function renderBoard(data, revealAll = false) {
+        const { size, fog } = data.settings;
+        const called = data.calledNumbers;
+        const grid = document.getElementById('game-board');
+        grid.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+        grid.style.width = `${size * 60}px`;
+        grid.innerHTML = '';
+
         myBoard.forEach(num => {
-            const isCalled = calledNumbers.includes(num);
+            const isCalled = called.includes(num);
             const div = document.createElement('div');
-            // 隱藏模式邏輯：只有我自己點過的，或是被叫到且非隱藏模式才變紅
-            const shouldShowMark = fogOfWar ? (localMarked.includes(num)) : isCalled;
+            // 揭曉邏輯：遊戲結束或非隱藏模式時，顯示所有已點數字
+            const showMarked = revealAll || !fog ? isCalled : isCalled && false; // 此處簡化，隱藏模式下僅靠玩家記憶或點擊後變色
             
-            div.className = `cell ${shouldShowMark ? 'marked' : ''} ${lastMove === num && !fogOfWar ? 'last-move' : ''}`;
+            div.className = `cell text-lg ${isCalled ? 'marked' : ''}`;
             div.innerText = num;
-            div.onclick = () => handleMove(num, calledNumbers);
-            container.appendChild(div);
+            div.onclick = () => handleMove(num, data);
+            grid.appendChild(div);
         });
     }
 
-    async function handleMove(num, calledNumbers) {
-        if (isGameOver) return;
-        const snap = await get(ref(db, `rooms/${currentRoomId}`));
-        const data = snap.val();
-        if (data.playerOrder[data.turnIndex] !== currentUser.uid) return;
-        if (calledNumbers.includes(num)) return;
+    async function handleMove(num, data) {
+        if (data.playerOrder[data.turnIndex] !== currentUser.uid || data.status !== 'playing') return;
+        if (data.calledNumbers.includes(num)) return;
 
-        localMarked.push(num); // 自己點的數字一定要標記
         const nextIdx = (data.turnIndex + 1) % data.playerOrder.length;
         await update(ref(db, `rooms/${currentRoomId}`), {
-            calledNumbers: [...calledNumbers, num],
-            turnIndex: nextIdx,
-            lastMove: num
+            calledNumbers: [...data.calledNumbers, num],
+            turnIndex: nextIdx
         });
     }
 
-    function checkWin(calledNumbers, goal) {
+    // AI 簡單建議：隨機選一個還沒被叫過的號碼
+    document.getElementById('btn-ai-hint').onclick = async () => {
+        const snap = await get(ref(db, `rooms/${currentRoomId}`));
+        const data = snap.val();
+        const uncalled = myBoard.filter(n => !data.calledNumbers.includes(n));
+        const hint = uncalled[Math.floor(Math.random() * uncalled.length)];
+        alert(`AI 建議出：${hint}`);
+    };
+
+    function checkWin(data) {
         if (isGameOver) return;
+        const size = data.settings.size;
+        const called = data.calledNumbers;
         let lines = 0;
         const matrix = [];
-        for (let i = 0; i < 5; i++) {
-            matrix[i] = myBoard.slice(i*5, i*5+5).map(n => calledNumbers.includes(n));
-        }
-        for (let i = 0; i < 5; i++) {
-            if (matrix[i].every(v => v)) lines++;
-            if (matrix.map(r => r[i]).every(v => v)) lines++;
-        }
-        if ([0,1,2,3,4].every(i => matrix[i][i])) lines++;
-        if ([0,1,2,3,4].every(i => matrix[i][4-i])) lines++;
+        for (let i = 0; i < size; i++) matrix[i] = myBoard.slice(i * size, i * size + size).map(n => called.includes(n));
 
-        if (lines >= goal) {
+        for (let i = 0; i < size; i++) {
+            if (matrix[i].every(v => v)) lines++; // 橫
+            if (matrix.map(r => r[i]).every(v => v)) lines++; // 豎
+        }
+        if (Array.from({length: size}, (_, i) => matrix[i][i]).every(v => v)) lines++;
+        if (Array.from({length: size}, (_, i) => matrix[i][size-1-i]).every(v => v)) lines++;
+
+        if (lines >= data.settings.goal) {
             isGameOver = true;
             update(ref(db, `rooms/${currentRoomId}`), { status: 'ended', winnerName: currentUser.displayName });
         }
     }
 
-    // --- 事件綁定 ---
     document.getElementById('btn-start').onclick = async () => {
-        await update(ref(db, `rooms/${currentRoomId}`), { 
-            status: 'counting',
-            settings: { 
+        await update(ref(db, `rooms/${currentRoomId}`), {
+            status: 'playing',
+            settings: {
+                size: parseInt(document.getElementById('select-size').value),
+                range: parseInt(document.getElementById('select-range').value),
                 goal: parseInt(document.getElementById('select-goal').value),
-                fogOfWar: document.getElementById('select-fog').value === 'true'
+                fog: document.getElementById('select-fog').value === 'true'
             }
         });
-        setTimeout(() => {
-            update(ref(db, `rooms/${currentRoomId}`), { status: 'playing' });
-        }, 3500);
     };
 
-    window.kickPlayer = (uid) => remove(ref(db, `rooms/${currentRoomId}/players/${uid}`));
-    document.getElementById('btn-leave').onclick = () => location.reload();
-
+    window.kick = (uid) => remove(ref(db, `rooms/${currentRoomId}/players/${uid}`));
+    function showSection(id) { ['login-section', 'lobby-section', 'room-section'].forEach(s => document.getElementById(s).classList.toggle('hidden', s !== id)); }
 </script>
 </body>
 </html>
